@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     size: {
-      type: Number,
+      type: String,
       required: true,
     },
   },
@@ -31,3 +31,5 @@ const productSchema = new mongoose.Schema(
 );
 
 const Product = mongoose.model("Product", productSchema);
+
+module.exports = Product;

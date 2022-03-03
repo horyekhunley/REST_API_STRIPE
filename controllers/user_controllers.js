@@ -113,12 +113,49 @@ exports.getUser = async (req, res) => {
   }
 };
 exports.getAllUsers = async (req, res) => {
+  const query = req.query.new;
   try {
-    const user = await User.find();
-    const { password, ...userWithoutPassword } = user.toObject();
+    const users = query
+      ? await User.find().sort({ _id: -1 }).limit(5)
+      : await User.find();
 
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
+//GET user statistics
+exports.getUserStatistics = async (req, res) => {
+  const date = new Date();
+  const lastYear = new Date(
+    date.getFullYear() - 1,
+    date.getMonth(),
+    date.getDate()
+  );
+  try {
+    const users = await User.find();
+    const userCount = users.length;
+    const adminCount = users.filter((user) => user.isAdmin).length;
+    const data = await User.aggregate([
+      { $match: { createdAt: { $gte: lastYear } } },
+      {
+        $project: {
+          month: { $month: "$createdAt" },
+        },
+      },
+      {
+        $group: {
+          _id: "$month",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
+    const nonAdminCount = userCount - adminCount;
     res.status(200).json({
-      userWithoutPassword,
+      data,
+      userCount,
+      adminCount,
+      nonAdminCount,
     });
   } catch (error) {
     res.status(500).json(error);
